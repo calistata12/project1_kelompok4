@@ -1,9 +1,3 @@
-"""TransaksiPeminjaman: induk transaksi, berisi list DetailPeminjaman.
-
-Memakai class milik kelompok:
-    Mahasiswa: get_nim(), get_nama()
-    Alat:      kode_alat, nama_alat, tersedia, set_tersedia(), set_kondisi()
-"""
 from datetime import datetime, timedelta
 
 from detail_peminjaman import DetailPeminjaman
@@ -13,8 +7,7 @@ STATUS_SEBAGIAN = "Sebagian Dikembalikan"
 STATUS_SELESAI = "Selesai"
 
 MAKS_HARI_PINJAM = 7
-MAKS_TRANSAKSI_AKTIF = 2   
-
+MAKS_TRANSAKSI_AKTIF = 2
 
 class TransaksiPeminjaman:
     def __init__(self, id_transaksi, mahasiswa, tanggal_pinjam=None,
@@ -23,19 +16,17 @@ class TransaksiPeminjaman:
             raise ValueError(f"Lama peminjaman harus 1-{MAKS_HARI_PINJAM} hari.")
         self.id_transaksi = id_transaksi
         self.mahasiswa = mahasiswa
-        self.daftar_detail = []                      # list[DetailPeminjaman]
+        self.daftar_detail = []
         self.tanggal_pinjam = tanggal_pinjam or datetime.now()
         self.batas_kembali = self.tanggal_pinjam + timedelta(days=lama_hari)
         self.status = STATUS_DIPINJAM
 
-    # ---------- isi transaksi ----------
     def tambah_alat(self, alat, jumlah=1):
-        """Tambah alat ke transaksi (Aturan 1 & 3)."""
         if not alat.tersedia:
             raise ValueError(f"Alat {alat.kode_alat} - {alat.nama_alat} tidak tersedia.")
         if self.cari_detail(alat.kode_alat):
             raise ValueError(f"Alat {alat.kode_alat} sudah ada di transaksi ini.")
-        alat.set_tersedia(False)           # alat sedang dipinjam
+        alat.set_tersedia(False)
         detail = DetailPeminjaman(alat, jumlah)
         self.daftar_detail.append(detail)
         return detail
@@ -46,13 +37,14 @@ class TransaksiPeminjaman:
                 return d
         return None
 
-    # ---------- pengembalian ----------
     def kembalikan_alat(self, kode_alat, kondisi, tanggal=None):
-        """Kembalikan satu alat (Aturan 4 & 5), lalu perbarui status transaksi."""
         detail = self.cari_detail(kode_alat)
         if detail is None:
             raise ValueError(f"Alat {kode_alat} tidak ada di transaksi {self.id_transaksi}.")
-        detail.kembalikan(kondisi, tanggal)
+        tanggal = tanggal or datetime.now()
+        if tanggal < self.tanggal_pinjam:
+            raise ValueError("Tanggal pengembalian tidak boleh sebelum tanggal peminjaman.")
+        detail.kembalikan(kondisi, tanggal, self._hari_lewat_batas(tanggal))
         self._perbarui_status()
         return detail
 
@@ -65,31 +57,30 @@ class TransaksiPeminjaman:
         else:
             self.status = STATUS_SELESAI
 
-    # ---------- query ----------
     @property
     def aktif(self):
-        """Aturan 4: transaksi aktif sampai SEMUA alat dikembalikan."""
         return self.status != STATUS_SELESAI
 
     def milik(self, nim):
-        """True jika transaksi ini milik mahasiswa ber-NIM tersebut."""
         return self.mahasiswa.get_nim() == nim
 
     def alat_belum_kembali(self):
         return [d for d in self.daftar_detail if not d.sudah_dikembalikan]
 
     def memuat_alat(self, kode_alat):
-        """Aturan 6: apakah alat masih tercatat di transaksi aktif ini."""
         d = self.cari_detail(kode_alat)
         return self.aktif and d is not None and not d.sudah_dikembalikan
 
-    def terlambat(self, sekarang=None):
-        return self.aktif and (sekarang or datetime.now()) > self.batas_kembali
+    def _hari_lewat_batas(self, waktu):
+        return max(0, (waktu.date() - self.batas_kembali.date()).days)
 
     def hari_terlambat(self, sekarang=None):
-        if not self.terlambat(sekarang):
+        if not self.aktif:
             return 0
-        return ((sekarang or datetime.now()) - self.batas_kembali).days
+        return self._hari_lewat_batas(sekarang or datetime.now())
+
+    def terlambat(self, sekarang=None):
+        return self.hari_terlambat(sekarang) > 0
 
     def to_dict(self):
         return {
