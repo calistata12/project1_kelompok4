@@ -14,9 +14,8 @@ class DetailPeminjaman:
             raise ValueError("Jumlah harus minimal 1.")
         self.alat = alat
         self.jumlah = jumlah
-        self.kondisi_kembali = None      # diisi saat dikembalikan
-        self.tanggal_kembali = None      # diisi saat dikembalikan
-
+        self.kondisi_kembali = None      
+        self.tanggal_kembali = None      
     @property
     def sudah_dikembalikan(self):
         return self.tanggal_kembali is not None
@@ -34,7 +33,7 @@ class DetailPeminjaman:
             raise ValueError(f"Alat {self.alat.kode_alat} sudah dikembalikan.")
         self.kondisi_kembali = kondisi
         self.tanggal_kembali = tanggal or datetime.now()
-        self.alat.set_kondisi(kondisi.title())            # "Rusak Ringan"
+        self.alat.set_kondisi(kondisi.title())            
         self.alat.set_tersedia(kondisi == "baik")
 
     def to_dict(self):
