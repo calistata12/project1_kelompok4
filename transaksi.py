@@ -13,7 +13,7 @@ STATUS_SEBAGIAN = "Sebagian Dikembalikan"
 STATUS_SELESAI = "Selesai"
 
 MAKS_HARI_PINJAM = 7
-MAKS_TRANSAKSI_AKTIF = 2   # Aturan 2, dicek oleh SistemPeminjamanApp
+MAKS_TRANSAKSI_AKTIF = 2   
 
 
 class TransaksiPeminjaman:
