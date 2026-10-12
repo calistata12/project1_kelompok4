@@ -13,6 +13,14 @@ class Mahasiswa:
         """Mengembalikan value Nama"""
         return self.__nama
 
+    def get_no_hp(self) -> str:
+        """Mengembalikan value Nomor HP"""
+        return self.__no_hp
+
+    def get_status_aktif(self) -> bool:
+        """Mengembalikan status aktif peminjaman mahasiswa"""
+        return self.__status_aktif
+
     def set_status_aktif(self, status: bool):
         """Mengubah status aktif peminjaman mahasiswa"""
         self.__status_aktif = status
